@@ -1,28 +1,70 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Calendar, Trophy, Users, Menu, X, Sun, Moon, Star, Clock, MapPin, ChevronRight } from "lucide-react"
+import React, { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import Header from "@/components/Header"
 import { useTheme } from "next-themes"
-// Chess piece Unicode symbols
+
+import api from "./utils/api"
+
+import Header from "@/components/Header"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  Calendar, Trophy, Users, Star, Clock, MapPin, ChevronRight
+} from "lucide-react"
+import { PuzzlePiecesType, PuzzleResponseType, ClickedMovesType, TopMembersType, UpcomingEventsType, RecentNewsType } from "./types"
+
+// ♞ Chess Pieces
 const chessPieces = ["♔", "♕", "♖", "♗", "♘", "♙", "♚", "♛", "♜", "♝", "♞", "♟"]
 
 export default function ChessClubWebsite() {
   const { theme } = useTheme()
+
   const [animatedPieces, setAnimatedPieces] = useState<
     Array<{ id: number; piece: string; x: number; y: number; delay: number }>
   >([])
 
+  const [puzzleDescription, setPuzzleDescription] = useState("")
+  const [puzzleSolved, setPuzzleSolved] = useState(0)
+  const [puzzleSolvedPercent, setPuzzleSolvedPercent] = useState(0)
+  const [puzzlePieces, setPuzzlePieces] = useState<PuzzlePiecesType>({})
+  const [puzzleResponse, setPuzzleResponse] = useState<PuzzleResponseType>([])
+  const [clickedMoves, setClickedMoves] = useState<ClickedMovesType>({})
+  const [topMembers, setTopMembers] = useState<TopMembersType>([])
+  const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEventsType>([])
+  const [recentNews, setRecentNews] = useState<RecentNewsType>([])
+
+  // 📌 Fetch Data Handlers
+  const fetchPuzzle = useCallback(async () => {
+    const { data } = await api.get("/api/puzzle/today_puzzle")
+    setPuzzlePieces(data.puzzle_pieces)
+    setPuzzleResponse(data.puzzle_response)
+    setPuzzleDescription(data.puzzle_description)
+    setPuzzleSolved(data.puzzle_solved)
+    setPuzzleSolvedPercent(data.puzzle_solved_percent)
+  }, [])
+
+  const fetchTopPlayers = useCallback(async () => {
+    const { data } = await api.get("/api/members/top_members")
+    setTopMembers(data.top_members)
+  }, [])
+
+  const fetchUpcomingEvents = useCallback(async () => {
+    const { data } = await api.get("/api/events/upcoming_events")
+    setUpcomingEvents(data.events)
+  }, [])
+
+  const fetchRecentNews = useCallback(async () => {
+    const { data } = await api.get("/api/news/recent_news")
+    setRecentNews(data.news)
+  }, [])
+
   useEffect(() => {
-    // Generate animated chess pieces for background
+    Promise.all([fetchPuzzle(), fetchTopPlayers(), fetchUpcomingEvents(), fetchRecentNews()])
+
     const pieces = Array.from({ length: 20 }, (_, i) => ({
       id: i,
       piece: chessPieces[Math.floor(Math.random() * chessPieces.length)],
@@ -31,64 +73,14 @@ export default function ChessClubWebsite() {
       delay: Math.random() * 5,
     }))
     setAnimatedPieces(pieces)
-  }, [])
 
-
-  const upcomingEvents = [
-    {
-      title: "Fall Championship",
-      date: "Nov 15, 2024",
-      time: "2:00 PM",
-      location: "Student Center",
-      participants: 24,
-    },
-    {
-      title: "Blitz Tournament",
-      date: "Nov 22, 2024",
-      time: "6:00 PM",
-      location: "Chess Room",
-      participants: 16,
-    },
-    {
-      title: "Beginner Workshop",
-      date: "Nov 29, 2024",
-      time: "4:00 PM",
-      location: "Library Hall",
-      participants: 12,
-    },
-  ]
-
-  const topMembers = [
-    { name: "Alex Chen", rating: 1850, wins: 23, avatar: "/placeholder.svg?height=40&width=40" },
-    { name: "Sarah Johnson", rating: 1820, wins: 21, avatar: "/placeholder.svg?height=40&width=40" },
-    { name: "Mike Rodriguez", rating: 1795, wins: 19, avatar: "/placeholder.svg?height=40&width=40" },
-    { name: "Emma Davis", rating: 1780, wins: 18, avatar: "/placeholder.svg?height=40&width=40" },
-  ]
-
-  const recentNews = [
-    {
-      title: "Chess Club Wins Regional Championship",
-      excerpt: "Our team dominated the inter-collegiate tournament with outstanding performances...",
-      date: "Nov 10, 2024",
-      image: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      title: "New Chess Tactics Workshop Series",
-      excerpt: "Join us every Wednesday for intensive tactical training sessions...",
-      date: "Nov 8, 2024",
-      image: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      title: "Guest Master Class with GM Sarah Williams",
-      excerpt: "International Grandmaster Sarah Williams will conduct a special masterclass...",
-      date: "Nov 5, 2024",
-      image: "/placeholder.svg?height=200&width=300",
-    },
-  ]
+    // Add smooth scroll to body
+    document.documentElement.style.scrollBehavior = "smooth"
+  }, [fetchPuzzle, fetchTopPlayers, fetchUpcomingEvents, fetchRecentNews])
 
   return (
     <div
-      className={`min-h-screen transition-colors duration-300 ${theme==="dark" ? "dark bg-gray-900 text-white" : "bg-white text-gray-900"}`}
+      className={`min-h-screen transition-colors duration-300 ${theme === "dark" ? "dark bg-gray-900 text-white" : "bg-white text-gray-900"}`}
     >
       {/* Animated Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-5">
@@ -108,7 +100,7 @@ export default function ChessClubWebsite() {
         ))}
       </div>
 
-      <Header/>
+      <Header />
       {/* Hero Section */}
       <section className="relative py-20 lg:py-32 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900"></div>
@@ -217,15 +209,6 @@ export default function ChessClubWebsite() {
                         const row = Math.floor(i / 8)
                         const col = i % 8
                         const isLight = (row + col) % 2 === 0
-                        // Sample puzzle position
-                        const puzzlePieces: { [key: number]: string } = {
-                          4: "♚",
-                          12: "♛",
-                          20: "♖",
-                          28: "♔",
-                          36: "♙",
-                          44: "♙",
-                        }
 
                         return (
                           <div
@@ -243,27 +226,31 @@ export default function ChessClubWebsite() {
                     <div>
                       <h3 className="text-xl font-semibold mb-2">Find the Best Move</h3>
                       <p className="text-gray-600 dark:text-gray-400 mb-4">
-                        White has a forced mate in 3 moves. Can you find the winning sequence?
+                        {puzzleDescription}
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        <Button variant="outline" size="sm" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 bg-transparent">
-                          Qh5+
-                        </Button>
-                        <Button variant="outline" size="sm" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 bg-transparent">
-                          Rxf7
-                        </Button>
-                        <Button variant="outline" size="sm" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 bg-transparent">
-                          Bg5
-                        </Button>
-                        <Button variant="outline" size="sm" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 bg-transparent">
-                          Nf6+
-                        </Button>
+                        {puzzleResponse.map((response, index) => (
+                          <Button
+                            key={index}
+                            variant="outline"
+                            onClick={() =>
+                              setClickedMoves((prev) => ({ ...prev, [index]: true }))
+                            }
+                            size="sm"
+                            className={`border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 bg-transparent ${!clickedMoves[index] ? '' : response.correct
+                              ? "bg-green-100 dark:bg-green-800/40 shadow-[0_0_10px_2px_rgba(34,197,94,0.6)]"
+                              : "bg-red-100 dark:bg-red-800/40 shadow-[0_0_10px_2px_rgba(239,68,68,0.6)]"
+                              }`}
+                          >
+                            {response.move}
+                          </Button>
+                        ))}
                       </div>
                     </div>
                     <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                       <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-                        <span>Solved by 847 players</span>
-                        <span>Success rate: 73%</span>
+                        <span>Solved by {puzzleSolved} players</span>
+                        <span>Success rate: {puzzleSolvedPercent}%</span>
                       </div>
                     </div>
                   </div>
@@ -293,14 +280,14 @@ export default function ChessClubWebsite() {
                 <div className="space-y-4">
                   {topMembers.map((member, index) => (
                     <div
-                      key={member.name}
+                      key={index}
                       className="flex items-center space-x-4 p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                     >
                       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 font-bold">
                         {index + 1}
                       </div>
                       <Avatar>
-                        <AvatarImage src={member.avatar || "/placeholder.svg"} alt={member.name} />
+                        <AvatarImage src={member.avatar || "/placeholder.svg"} />
                         <AvatarFallback>
                           {member.name
                             .split(" ")

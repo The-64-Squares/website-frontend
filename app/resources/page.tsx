@@ -5,147 +5,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { BookOpen, Download, ExternalLink, Video, FileText, Puzzle, Trophy, Users, Star } from "lucide-react"
 import Link from "next/link"
-
-const resources = {
-  beginnerGuides: [
-    {
-      title: "Chess Basics: How to Play",
-      description: "Complete guide for absolute beginners covering rules, piece movements, and basic strategies.",
-      type: "PDF Guide",
-      downloadUrl: "#",
-      rating: 4.9,
-      downloads: 1250,
-    },
-    {
-      title: "Opening Principles",
-      description: "Learn the fundamental principles of chess openings and common opening moves.",
-      type: "Video Series",
-      downloadUrl: "#",
-      rating: 4.8,
-      downloads: 980,
-    },
-    {
-      title: "Basic Tactics Workbook",
-      description: "Practice essential tactical patterns like pins, forks, and skewers.",
-      type: "Interactive PDF",
-      downloadUrl: "#",
-      rating: 4.7,
-      downloads: 1100,
-    },
-  ],
-  intermediateResources: [
-    {
-      title: "Middlegame Strategy Guide",
-      description: "Advanced strategies for the middlegame including pawn structures and piece coordination.",
-      type: "PDF Guide",
-      downloadUrl: "#",
-      rating: 4.9,
-      downloads: 750,
-    },
-    {
-      title: "Endgame Essentials",
-      description: "Master the most important endgame positions and techniques.",
-      type: "Video Course",
-      downloadUrl: "#",
-      rating: 4.8,
-      downloads: 650,
-    },
-    {
-      title: "Tactical Puzzle Collection",
-      description: "500+ tactical puzzles ranging from intermediate to advanced difficulty.",
-      type: "PDF Collection",
-      downloadUrl: "#",
-      rating: 4.9,
-      downloads: 890,
-    },
-  ],
-  advancedMaterials: [
-    {
-      title: "Grandmaster Game Analysis",
-      description: "Detailed analysis of classic games by world champions and grandmasters.",
-      type: "Annotated Games",
-      downloadUrl: "#",
-      rating: 5.0,
-      downloads: 420,
-    },
-    {
-      title: "Opening Repertoire Builder",
-      description: "Build a complete opening repertoire for both white and black pieces.",
-      type: "Interactive Guide",
-      downloadUrl: "#",
-      rating: 4.8,
-      downloads: 380,
-    },
-    {
-      title: "Tournament Preparation",
-      description: "Mental preparation, time management, and competitive strategies.",
-      type: "PDF Guide",
-      downloadUrl: "#",
-      rating: 4.7,
-      downloads: 290,
-    },
-  ],
-}
-
-const tools = [
-  {
-    name: "Chess.com",
-    description: "Play online, solve puzzles, and watch educational content",
-    url: "https://chess.com",
-    type: "Online Platform",
-    free: true,
-  },
-  {
-    name: "Lichess",
-    description: "Free and open-source chess server with analysis tools",
-    url: "https://lichess.org",
-    type: "Online Platform",
-    free: true,
-  },
-  {
-    name: "ChessBase",
-    description: "Professional chess database and analysis software",
-    url: "https://chessbase.com",
-    type: "Software",
-    free: false,
-  },
-  {
-    name: "Stockfish",
-    description: "Powerful open-source chess engine for analysis",
-    url: "https://stockfishchess.org",
-    type: "Chess Engine",
-    free: true,
-  },
-]
-
-const clubResources = [
-  {
-    title: "Club Tournament Rules",
-    description: "Official rules and regulations for club tournaments",
-    type: "PDF",
-    memberOnly: false,
-  },
-  {
-    title: "Meeting Minutes Archive",
-    description: "Historical records of club meetings and decisions",
-    type: "Archive",
-    memberOnly: true,
-  },
-  {
-    title: "Training Schedule",
-    description: "Weekly training sessions and workshop calendar",
-    type: "Calendar",
-    memberOnly: false,
-  },
-  {
-    title: "Member Directory",
-    description: "Contact information for all club members",
-    type: "Directory",
-    memberOnly: true,
-  },
-]
+import CheckBackLater from "@/components/Checkbacklater"
+import api from "../utils/api"
+import ChessLoading from "@/components/Loading"
+import { useEffect, useState } from "react"
+import { set } from "date-fns"
+import { ClubResources, Resources, Tools } from "./types"
 
 export default function ResourcesPage() {
+  const [resources, setResources] = useState<Resources>()
+  const [tools, setTools] = useState<Tools>([])
+  const [clubResources, setClubResources] = useState<ClubResources>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  useEffect(() => {
+    const fetchResources = async () => {
+      try {
+        const { data } = await api.get("/api/resource/allresources")
+        setResources(data.resources)
+        setTools(data.tools)
+        setClubResources(data.clubResources)
+      } catch (err: any) {
+        setError(err.message || "Unknown error")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchResources()
+  }, [])
+  if (loading) return <ChessLoading />
+  if (error) return <div>{error}</div>
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       {/* Header */}
@@ -157,8 +47,7 @@ export default function ResourcesPage() {
           </div>
         </div>
       </div>
-
-      <div className="container mx-auto px-4 py-12">
+      {!resources || !tools || !clubResources ? <CheckBackLater /> : <div className="container mx-auto px-4 py-12">
         {/* Quick Stats */}
         <div className="grid md:grid-cols-4 gap-6 mb-12">
           <Card className="text-center">
@@ -219,9 +108,8 @@ export default function ResourcesPage() {
                         {Array.from({ length: 5 }, (_, i) => (
                           <Star
                             key={i}
-                            className={`h-4 w-4 ${
-                              i < Math.floor(resource.rating) ? "text-yellow-500 fill-current" : "text-gray-300"
-                            }`}
+                            className={`h-4 w-4 ${i < Math.floor(resource.rating) ? "text-yellow-500 fill-current" : "text-gray-300"
+                              }`}
                           />
                         ))}
                       </div>
@@ -270,9 +158,8 @@ export default function ResourcesPage() {
                         {Array.from({ length: 5 }, (_, i) => (
                           <Star
                             key={i}
-                            className={`h-4 w-4 ${
-                              i < Math.floor(resource.rating) ? "text-yellow-500 fill-current" : "text-gray-300"
-                            }`}
+                            className={`h-4 w-4 ${i < Math.floor(resource.rating) ? "text-yellow-500 fill-current" : "text-gray-300"
+                              }`}
                           />
                         ))}
                       </div>
@@ -321,9 +208,8 @@ export default function ResourcesPage() {
                         {Array.from({ length: 5 }, (_, i) => (
                           <Star
                             key={i}
-                            className={`h-4 w-4 ${
-                              i < Math.floor(resource.rating) ? "text-yellow-500 fill-current" : "text-gray-300"
-                            }`}
+                            className={`h-4 w-4 ${i < Math.floor(resource.rating) ? "text-yellow-500 fill-current" : "text-gray-300"
+                              }`}
                           />
                         ))}
                       </div>
@@ -419,6 +305,7 @@ export default function ResourcesPage() {
           </Link>
         </div>
       </div>
+      }
     </div>
   )
 }

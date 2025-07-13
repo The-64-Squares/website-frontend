@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -8,128 +8,33 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Trophy, Search, Users, Crown, Medal, Award } from "lucide-react"
 import Link from "next/link"
-
-const members = [
-  {
-    id: 1,
-    name: "Alex Chen",
-    title: "Club President",
-    rating: 1850,
-    major: "Computer Science",
-    year: "Senior",
-    wins: 23,
-    losses: 8,
-    draws: 5,
-    avatar: "/placeholder.svg?height=80&width=80",
-    achievements: ["Regional Champion 2024", "Club Tournament Winner"],
-    joinDate: "2021",
-    favoriteOpening: "Sicilian Defense",
-    bio: "Passionate about chess strategy and teaching newcomers. Leading the club to new heights!",
-  },
-  {
-    id: 2,
-    name: "Sarah Johnson",
-    title: "Vice President",
-    rating: 1820,
-    major: "Mathematics",
-    year: "Junior",
-    wins: 21,
-    losses: 6,
-    draws: 4,
-    avatar: "/placeholder.svg?height=80&width=80",
-    achievements: ["State Championship Finalist", "Best Female Player 2023"],
-    joinDate: "2022",
-    favoriteOpening: "Queen's Gambit",
-    bio: "Mathematics major who loves the logical beauty of chess. Always ready for a challenging game!",
-  },
-  {
-    id: 3,
-    name: "Mike Rodriguez",
-    title: "Tournament Director",
-    rating: 1795,
-    major: "Engineering",
-    year: "Senior",
-    wins: 19,
-    losses: 7,
-    draws: 6,
-    avatar: "/placeholder.svg?height=80&width=80",
-    achievements: ["Best Tournament Organizer", "Rapid Chess Champion"],
-    joinDate: "2020",
-    favoriteOpening: "King's Indian Defense",
-    bio: "Engineering precision meets chess strategy. Organizing tournaments is my passion!",
-  },
-  {
-    id: 4,
-    name: "Emma Davis",
-    title: "Secretary",
-    rating: 1780,
-    major: "Psychology",
-    year: "Sophomore",
-    wins: 18,
-    losses: 5,
-    draws: 3,
-    avatar: "/placeholder.svg?height=80&width=80",
-    achievements: ["Rising Star Award", "Best Newcomer 2023"],
-    joinDate: "2023",
-    favoriteOpening: "French Defense",
-    bio: "Psychology student fascinated by the mental aspects of chess. Quick learner and dedicated player!",
-  },
-  {
-    id: 5,
-    name: "David Kim",
-    title: "Treasurer",
-    rating: 1765,
-    major: "Business",
-    year: "Junior",
-    wins: 16,
-    losses: 9,
-    draws: 4,
-    avatar: "/placeholder.svg?height=80&width=80",
-    achievements: ["Financial Excellence Award", "Blitz Tournament Winner"],
-    joinDate: "2022",
-    favoriteOpening: "English Opening",
-    bio: "Business major managing club finances while pursuing chess excellence. Strategic thinking on and off the board!",
-  },
-  {
-    id: 6,
-    name: "Lisa Wang",
-    title: "Social Media Manager",
-    rating: 1740,
-    major: "Communications",
-    year: "Sophomore",
-    wins: 14,
-    losses: 6,
-    draws: 5,
-    avatar: "/placeholder.svg?height=80&width=80",
-    achievements: ["Social Media Excellence", "Creative Content Award"],
-    joinDate: "2023",
-    favoriteOpening: "Caro-Kann Defense",
-    bio: "Communications major spreading the love of chess through social media. Creative and strategic!",
-  },
-]
-
-const alumni = [
-  {
-    name: "Robert Thompson",
-    title: "Alumni - Software Engineer at Google",
-    rating: 1920,
-    graduationYear: "2023",
-    achievements: ["Club President 2022-2023", "National Championship Qualifier"],
-    avatar: "/placeholder.svg?height=80&width=80",
-  },
-  {
-    name: "Jennifer Lee",
-    title: "Alumni - Data Scientist at Microsoft",
-    rating: 1885,
-    graduationYear: "2022",
-    achievements: ["Vice President 2021-2022", "Regional Champion 2022"],
-    avatar: "/placeholder.svg?height=80&width=80",
-  },
-]
+import CheckBackLater from "@/components/Checkbacklater"
+import api from "../utils/api"
+import ChessLoading from "@/components/Loading"
+import { MembersType, AlumnisType } from "./types"
 
 export default function MembersPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [filterBy, setFilterBy] = useState("all")
+  const [members, setMembers] = useState<MembersType>([])
+  const [alumni, setAlumni] = useState<AlumnisType>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        const { data } = await api.get("/api/members/all_members")
+        setMembers(data.members)
+        setAlumni(data.alumni)
+      } catch (err: any) {
+        setError(err.message || "Unknown error")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchMembers()
+  }, [])
 
   const filteredMembers = members.filter((member) => {
     const matchesSearch =
@@ -143,7 +48,8 @@ export default function MembersPage() {
 
     return matchesSearch
   })
-
+  if (loading) return <ChessLoading />
+  if (error) return <div className="text-center py-20 text-red-500">Error: {error}</div>
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       {/* Header */}
@@ -152,25 +58,26 @@ export default function MembersPage() {
           <div className="text-center">
             <h1 className="text-4xl font-bold mb-4">Our Members</h1>
             <p className="text-xl opacity-90">Meet the strategic minds behind our chess club</p>
-            <div className="flex justify-center items-center space-x-8 mt-8">
-              <div className="text-center">
-                <div className="text-3xl font-bold">{members.length}</div>
-                <div className="text-sm opacity-80">Active Members</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold">{alumni.length}</div>
-                <div className="text-sm opacity-80">Alumni</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold">1785</div>
-                <div className="text-sm opacity-80">Avg Rating</div>
-              </div>
-            </div>
+            {
+              members.length != 0 &&
+              <div className="flex justify-center items-center space-x-8 mt-8">
+                <div className="text-center">
+                  <div className="text-3xl font-bold">{members.length}</div>
+                  <div className="text-sm opacity-80">Active Members</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold">{alumni.length}</div>
+                  <div className="text-sm opacity-80">Alumni</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold">1785</div>
+                  <div className="text-sm opacity-80">Avg Rating</div>
+                </div>
+              </div>}
           </div>
         </div>
       </div>
-
-      <div className="container mx-auto px-4 py-12">
+      {!(members.length != 0) ? <CheckBackLater /> : <div className="container mx-auto px-4 py-12">
         {/* Search and Filter */}
         <div className="flex flex-col md:flex-row gap-4 mb-8">
           <div className="relative flex-1">
@@ -371,6 +278,8 @@ export default function MembersPage() {
           </Link>
         </div>
       </div>
+      }
+
     </div>
   )
 }
