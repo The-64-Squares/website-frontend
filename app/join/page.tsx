@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Link from "next/link"
 import { useState } from "react"
 import { useTheme } from "next-themes"
+import CheckBackLater from "@/components/Checkbacklater"
 export default function JoinPage() {
   const { theme } = useTheme()
   const [formData, setFormData] = useState({
@@ -38,7 +39,7 @@ export default function JoinPage() {
       interests: ""
     })
   }
-
+  if(true){return <CheckBackLater/>}
   return (
      <div className={`min-h-screen transition-colors duration-300 ${theme=='dark'? "dark bg-gray-900 text-white" : "bg-white text-gray-900"}`}>
       <div className="min-h-screen py-12 bg-gray-50 dark:bg-gray-900">

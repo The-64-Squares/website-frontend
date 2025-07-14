@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -10,77 +10,34 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, Phone, Mail, Clock, Users, Calendar, MessageSquare, Send } from "lucide-react"
 import Link from "next/link"
+import api from "../utils/api"
+import ChessLoading from "@/components/Loading"
+import { ContactFormData, ContactInfoType, FaqType, initialContactFormData, initialContactInfo, OfficerType } from "./types"
 
-const contactInfo = {
-  address: "Student Center, Room 204\nUniversity Campus\nCity, State 12345",
-  phone: "(555) 123-4567",
-  email: "chess@college.edu",
-  hours: "Monday - Friday: 6:00 PM - 10:00 PM\nSaturday: 2:00 PM - 8:00 PM\nSunday: Closed",
-}
-
-const officers = [
-  {
-    name: "Alex Chen",
-    title: "Club President",
-    email: "president@chesclub.edu",
-    phone: "(555) 123-4568",
-    responsibilities: "Overall club management, tournament organization",
-  },
-  {
-    name: "Sarah Johnson",
-    title: "Vice President",
-    email: "vp@chessclub.edu",
-    phone: "(555) 123-4569",
-    responsibilities: "Member relations, event coordination",
-  },
-  {
-    name: "Mike Rodriguez",
-    title: "Tournament Director",
-    email: "tournaments@chessclub.edu",
-    phone: "(555) 123-4570",
-    responsibilities: "Tournament planning, rules enforcement",
-  },
-  {
-    name: "Emma Davis",
-    title: "Secretary",
-    email: "secretary@chessclub.edu",
-    phone: "(555) 123-4571",
-    responsibilities: "Meeting minutes, communications",
-  },
-]
-
-const faqs = [
-  {
-    question: "How do I join the chess club?",
-    answer: "Simply attend one of our weekly meetings or fill out our online membership form. No experience required!",
-  },
-  {
-    question: "What are the membership fees?",
-    answer: "Annual membership is $25 for students, which covers tournament entry fees and club materials.",
-  },
-  {
-    question: "Do I need to know how to play chess to join?",
-    answer: "Not at all! We welcome players of all skill levels and offer beginner workshops every month.",
-  },
-  {
-    question: "When and where do you meet?",
-    answer:
-      "We meet every Wednesday at 7:00 PM in the Student Center, Room 204. Additional practice sessions on weekends.",
-  },
-  {
-    question: "Can I participate in tournaments as a beginner?",
-    answer: "Yes! We have tournaments for different skill levels, including beginner-friendly events.",
-  },
-]
 
 export default function ContactPage() {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    subject: "",
-    message: "",
-    type: "general",
-  })
+  const [formData, setFormData] = useState<ContactFormData>(initialContactFormData)
+  const [contactInfo, setContactInfo] = useState<ContactInfoType>(initialContactInfo)
+  const [officers, setOfficers] = useState<OfficerType>([])
+  const [faqs, setFaqs] = useState<FaqType>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const [contactInfoRes, officersRes, faqsRes] = await Promise.all([
+        api.get("api/contact/contact_info/"),
+        api.get("api/contact/officers/"),
+        api.get("api/contact/faqs/"),
+      ])
+
+      setContactInfo(contactInfoRes.data.contact_info)
+      setOfficers(officersRes.data.officers)
+      setFaqs(faqsRes.data.faqs)
+      setLoading(false)
+    }
+
+    fetchData()
+  }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
@@ -102,7 +59,9 @@ export default function ContactPage() {
       type: "general",
     })
   }
-
+  if (loading) {
+    return <ChessLoading />
+  }
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       {/* Header */}
